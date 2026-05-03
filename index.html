@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Song Starter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f13;
+      color: #e8e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 40px;
+    }
+
+    /* ── Top row: Key + BPM ── */
+    .top-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    .result-card {
+      flex: 1;
+      background: #1a1a24;
+      border: 1px solid #2a2a3a;
+      border-radius: 12px;
+      padding: 20px 24px;
+      text-align: center;
+    }
+
+    .result-card .label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .result-card .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #c084fc;
+      min-height: 2rem;
+      transition: opacity 0.15s;
+    }
+
+    /* ── Track rows ── */
+    .tracks {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 960px;
+      margin-bottom: 32px;
+    }
+
+    .track-row {
+      background: #1a1a24;
+      border: 1px solid #2a2a3a;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .track-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #666;
+      width: 72px;
+      flex-shrink: 0;
+    }
+
+    .track-row select {
+      flex: 0 0 200px;
+      background: #0f0f13;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #e8e8f0;
+      font-size: 0.9rem;
+      padding: 8px 12px;
+      appearance: none;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .track-row select:focus {
+      border-color: #7c3aed;
+    }
+
+    .track-row select:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    .track-result {
+      flex: 1;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #c084fc;
+      text-align: right;
+      min-height: 1.4rem;
+      padding-left: 16px;
+    }
+
+    .track-result.empty {
+      color: #444;
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    /* ── Scale card extras ── */
+    .scale-card { flex: 2; }
+
+    .scale-meta {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 6px;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+
+    /* ── Roll button ── */
+    #rollBtn {
+      background: #7c3aed;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 48px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    #rollBtn:hover:not(:disabled) {
+      background: #6d28d9;
+    }
+
+    #rollBtn:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    #rollBtn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    /* ── Status / error ── */
+    #status {
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: #888;
+      text-align: center;
+    }
+
+    #status.error {
+      color: #f87171;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Song Starter</h1>
+  <p class="subtitle">Pick your plugins, then roll.</p>
+
+  <!-- Root + Scale + BPM -->
+  <div class="top-row">
+    <div class="result-card">
+      <div class="label">Root</div>
+      <div class="value" id="resultRoot">—</div>
+    </div>
+    <div class="result-card scale-card">
+      <div class="label">Scale</div>
+      <div class="value" id="resultScale">—</div>
+      <div class="scale-meta" id="resultDegrees"></div>
+      <div class="scale-meta" id="resultNotes"></div>
+    </div>
+    <div class="result-card">
+      <div class="label">BPM</div>
+      <div class="value" id="resultBpm">—</div>
+    </div>
+  </div>
+
+  <!-- Tracks -->
+  <div class="tracks">
+    <div class="track-row">
+      <span class="track-label">Lead</span>
+      <select id="pluginLead" disabled><option>Loading…</option></select>
+      <span class="track-result empty" id="resultLead">—</span>
+    </div>
+    <div class="track-row">
+      <span class="track-label">Other</span>
+      <select id="pluginOther" disabled><option>Loading…</option></select>
+      <span class="track-result empty" id="resultOther">—</span>
+    </div>
+    <div class="track-row">
+      <span class="track-label">Keys / Pad</span>
+      <select id="pluginKeysPad" disabled><option>Loading…</option></select>
+      <span class="track-result empty" id="resultKeysPad">—</span>
+    </div>
+    <div class="track-row">
+      <span class="track-label">Bass</span>
+      <select id="pluginBass" disabled><option>Loading…</option></select>
+      <span class="track-result empty" id="resultBass">—</span>
+    </div>
+    <div class="track-row">
+      <span class="track-label">Drums</span>
+      <select id="pluginDrums" disabled><option>Loading…</option></select>
+      <span class="track-result empty" id="resultDrums">—</span>
+    </div>
+  </div>
+
+  <button id="rollBtn" disabled>Roll</button>
+  <p id="status">Loading data…</p>
+
+  <script>
+    // ─────────────────────────────────────────────
+    // CONFIG — replace with your published Sheet ID
+    // ─────────────────────────────────────────────
+    const SHEET_ID = "1zzoxk_RTSNsGq2Mv0MmHIvXo_0cSF8V0CmqRothFbp0";
+
+    // Hardcoded roots and BPM range
+    const ROOTS   = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+    const BPM_MIN = 70;
+    const BPM_MAX = 160;
+
+    // Diatonic note naming (handles Cb, Fb, B#, E#, double accidentals)
+    const LETTER_NAMES     = ["C","D","E","F","G","A","B"];
+    const LETTER_SEMITONES = [0, 2, 4, 5, 7, 9, 11]; // natural semitones from C
+
+    function degreeToSemitone(deg) {
+      const BASE = { "1":0, "2":2, "3":4, "4":5, "5":7, "6":9, "7":11 };
+      const d = deg.trim();
+      const num = d.replace(/^[b#]+/, "");
+      let semi = BASE[num] ?? 0;
+      for (const ch of d) { if (ch === "b") semi--; else if (ch === "#") semi++; else break; }
+      return ((semi % 12) + 12) % 12;
+    }
+
+    function parseRoot(root) {
+      const letter = root[0];
+      const letterIdx = LETTER_NAMES.indexOf(letter);
+      let semi = LETTER_SEMITONES[letterIdx];
+      for (let i = 1; i < root.length; i++) {
+        if (root[i] === "b") semi--; else if (root[i] === "#") semi++;
+      }
+      return { letterIdx, semi: ((semi % 12) + 12) % 12 };
+    }
+
+    function computeNotes(root, degreesStr) {
+      if (!degreesStr) return "";
+      const { letterIdx: rootLetterIdx, semi: rootSemi } = parseRoot(root);
+      return degreesStr.trim().split(/[\s,]+/).map((deg) => {
+        const d = deg.trim();
+        const num = parseInt(d.replace(/^[b#]+/, "")) || 1;
+        const targetLetterIdx = (rootLetterIdx + num - 1) % 7;
+        const targetLetter    = LETTER_NAMES[targetLetterIdx];
+        const naturalSemi     = LETTER_SEMITONES[targetLetterIdx];
+        const targetSemiFromC = (rootSemi + degreeToSemitone(d)) % 12;
+        let diff = targetSemiFromC - naturalSemi;
+        if (diff >  6) diff -= 12;
+        if (diff < -6) diff += 12;
+        const acc = diff > 0 ? "#".repeat(diff) : "b".repeat(-diff);
+        return targetLetter + acc;
+      }).join("  ");
+    }
+
+    const csvUrl = (tab) =>
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+
+    // ─────────────────────────────────────────────
+    // CSV parser (handles quoted fields with commas)
+    // ─────────────────────────────────────────────
+    function parseCsv(text) {
+      const lines = text.trim().split("\n");
+      const headers = splitCsvRow(lines[0]);
+      return lines.slice(1).map((line) => {
+        const cols = splitCsvRow(line);
+        const obj = {};
+        headers.forEach((h, i) => {
+          obj[h.trim().replace(/^"|"$/g, "")] = (cols[i] || "").trim().replace(/^"|"$/g, "");
+        });
+        return obj;
+      }).filter((row) => Object.values(row).some((v) => v !== ""));
+    }
+
+    function splitCsvRow(row) {
+      const result = [];
+      let cur = "", inQuote = false;
+      for (let i = 0; i < row.length; i++) {
+        const ch = row[i];
+        if (ch === '"') {
+          if (inQuote && row[i + 1] === '"') { cur += '"'; i++; }
+          else inQuote = !inQuote;
+        } else if (ch === "," && !inQuote) {
+          result.push(cur); cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+      result.push(cur);
+      return result;
+    }
+
+    // ─────────────────────────────────────────────
+    // State
+    // ─────────────────────────────────────────────
+    const data = { scales: [], bass: [], keysPad: [], lead: [], other: [], drums: [] };
+
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function uniquePlugins(rows) {
+      return [...new Set(rows.map((r) => r.Plugin).filter(Boolean))].sort();
+    }
+
+    function populateDropdown(selectEl, plugins) {
+      selectEl.innerHTML = "";
+      plugins.forEach((p) => {
+        const opt = document.createElement("option");
+        opt.value = p;
+        opt.textContent = p;
+        selectEl.appendChild(opt);
+      });
+      selectEl.disabled = false;
+    }
+
+    // ─────────────────────────────────────────────
+    // Load
+    // ─────────────────────────────────────────────
+    async function loadData() {
+      const tabs = ["Scales", "Bass", "KeysPad", "Lead", "Other", "Drums"];
+      const responses = await Promise.all(tabs.map((t) => fetch(csvUrl(t))));
+
+      for (const res of responses) {
+        if (!res.ok) throw new Error(`HTTP ${res.status} for ${res.url}`);
+      }
+
+      const texts = await Promise.all(responses.map((r) => r.text()));
+      const [scalesText, bassRaw, keysPadRaw, leadRaw, otherRaw, drumsRaw] =
+        [texts[0], ...texts.slice(1).map(parseCsv)];
+
+      // Scales tab now has headers: Scale, Degrees
+      data.scales = scalesText ? parseCsv(scalesText).filter((r) => r.Scale) : [];
+      data.bass    = bassRaw;
+      data.keysPad = keysPadRaw;
+      data.lead    = leadRaw;
+      data.other   = otherRaw;
+      data.drums   = drumsRaw;
+
+      populateDropdown(document.getElementById("pluginBass"),    uniquePlugins(data.bass));
+      populateDropdown(document.getElementById("pluginKeysPad"), uniquePlugins(data.keysPad));
+      populateDropdown(document.getElementById("pluginLead"),    uniquePlugins(data.lead));
+      populateDropdown(document.getElementById("pluginOther"),   uniquePlugins(data.other));
+      populateDropdown(document.getElementById("pluginDrums"),   uniquePlugins(data.drums));
+
+      document.getElementById("rollBtn").disabled = false;
+      document.getElementById("status").textContent = "";
+    }
+
+    // ─────────────────────────────────────────────
+    // Roll
+    // ─────────────────────────────────────────────
+    function rollTrack(rows, pluginSelectId, resultId, presetField) {
+      const plugin = document.getElementById(pluginSelectId).value;
+      const filtered = rows.filter((r) => r.Plugin === plugin);
+      const resultEl = document.getElementById(resultId);
+
+      if (!filtered.length) {
+        resultEl.textContent = "No presets found";
+        resultEl.className = "track-result empty";
+        return;
+      }
+
+      const chosen = pick(filtered);
+      const raw = chosen[presetField] || "—";
+      resultEl.textContent = raw.replace(/\.[^/.]+$/, "");
+      resultEl.className = "track-result";
+    }
+
+    function roll() {
+      // Root (hardcoded) + Scale (sheet) + BPM (hardcoded range)
+      const root  = pick(ROOTS);
+      const scale = pick(data.scales);
+      const scaleName    = scale ? scale.Scale   : "—";
+      const scaleDegrees = scale ? scale.Degrees : "";
+
+      document.getElementById("resultRoot").textContent    = root;
+      document.getElementById("resultScale").textContent   = scaleName;
+      document.getElementById("resultDegrees").textContent = scaleDegrees.replace(/,/g, "");
+      document.getElementById("resultNotes").textContent   = computeNotes(root, scaleDegrees);
+      document.getElementById("resultBpm").textContent     = randomInt(BPM_MIN, BPM_MAX);
+
+      // Tracks
+      rollTrack(data.bass,    "pluginBass",    "resultBass",    "Preset");
+      rollTrack(data.keysPad, "pluginKeysPad", "resultKeysPad", "Preset");
+      rollTrack(data.lead,    "pluginLead",    "resultLead",    "Preset");
+      rollTrack(data.other,   "pluginOther",   "resultOther",   "Preset");
+      rollTrack(data.drums,   "pluginDrums",   "resultDrums",   "Kit");
+    }
+
+    // ─────────────────────────────────────────────
+    // Init
+    // ─────────────────────────────────────────────
+    document.getElementById("rollBtn").addEventListener("click", roll);
+
+    loadData().catch((err) => {
+      console.error(err);
+      const status = document.getElementById("status");
+      status.textContent = "Couldn't load data. Make sure the Google Sheet is published to the web and SHEET_ID is set correctly.";
+      status.className = "error";
+    });
+  </script>
+</body>
+</html>
