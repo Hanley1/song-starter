@@ -144,6 +144,27 @@
       letter-spacing: 0.2px;
     }
 
+    .scale-card label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .scale-card input[type="checkbox"] {
+      accent-color: #7c3aed;
+      width: 12px;
+      height: 12px;
+      cursor: pointer;
+    }
+
     /* ── Roll button ── */
     #rollBtn {
       background: #7c3aed;
@@ -200,6 +221,10 @@
       <div class="value" id="resultScale">—</div>
       <div class="scale-meta" id="resultDegrees"></div>
       <div class="scale-meta" id="resultNotes"></div>
+      <label>
+        <input type="checkbox" id="commonScalesOnly" />
+        Major &amp; Minor only
+      </label>
     </div>
     <div class="result-card">
       <div class="label">BPM</div>
@@ -412,7 +437,11 @@
     function roll() {
       // Root (hardcoded) + Scale (sheet) + BPM (hardcoded range)
       const root  = pick(ROOTS);
-      const scale = pick(data.scales);
+      const commonOnly = document.getElementById("commonScalesOnly").checked;
+      const scalePool = commonOnly
+        ? data.scales.filter((s) => s.Scale === "Major" || s.Scale === "Minor")
+        : data.scales;
+      const scale = pick(scalePool.length ? scalePool : data.scales);
       const scaleName    = scale ? scale.Scale   : "—";
       const scaleDegrees = scale ? scale.Degrees : "";
 
